@@ -54,7 +54,6 @@ export class AudioEngine {
     }).toDestination();
 
     const hihatSynth = new Tone.MetalSynth({
-      frequency: 200,
       envelope: { attack: 0.001, decay: 0.1, release: 0.01 },
       harmonicity: 5.1,
       modulationIndex: 32,
@@ -63,7 +62,6 @@ export class AudioEngine {
     }).toDestination();
 
     const rideSynth = new Tone.MetalSynth({
-      frequency: 300,
       envelope: { attack: 0.001, decay: 0.4, release: 0.1 },
       harmonicity: 3.1,
       modulationIndex: 16,
@@ -74,18 +72,19 @@ export class AudioEngine {
     // Create a custom drum sampler that maps to these synths
     const drumKit = {
       triggerAttackRelease: (note: string, duration: number, time?: number) => {
+        const triggerTime = time !== undefined ? time : Tone.now();
         switch (note) {
           case 'C1': // bass/kick
-            kickSynth.triggerAttackRelease('C1', duration, time);
+            kickSynth.triggerAttackRelease('C1', duration, triggerTime);
             break;
           case 'D1': // snare
-            snareSynth.triggerAttackRelease(duration, time);
+            snareSynth.triggerAttackRelease(duration, triggerTime);
             break;
           case 'F1': // hihat
-            hihatSynth.triggerAttackRelease(duration, time);
+            hihatSynth.triggerAttackRelease(duration, triggerTime);
             break;
           case 'A1': // ride
-            rideSynth.triggerAttackRelease(duration, time);
+            rideSynth.triggerAttackRelease(duration, triggerTime);
             break;
         }
       },
@@ -100,7 +99,7 @@ export class AudioEngine {
 
     this.drumSampler = drumKit as any;
     this.drumSamplerLoaded = true;
-    this.players.set('drums', this.drumSampler);
+    this.players.set('drums', drumKit as any);
     console.log('Synthesized drum kit ready');
 
     this.drumSamplerLoadPromise = Promise.resolve();
@@ -236,10 +235,18 @@ export class AudioEngine {
     console.log(`Total events scheduled: ${events.length}`);
 
     // Create a Tone.Part to schedule all events
-    this.currentPart = new Tone.Part((time, event) => {
+    type EventType = {
+      time: number;
+      note: string;
+      duration: number;
+      instrument: Tone.PolySynth | Tone.Sampler;
+      volume: number;
+    };
+
+    this.currentPart = new Tone.Part((time, event: EventType) => {
       event.instrument.volume.value = Tone.gainToDb(event.volume);
       event.instrument.triggerAttackRelease(event.note, event.duration, time);
-    }, events.map(e => [e.time, e]));
+    }, events as any);
 
     this.currentPart.loop = this.loop;
     this.currentPart.loopEnd = songDuration;
