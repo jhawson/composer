@@ -4,7 +4,7 @@ A real-time collaborative music composition web application built with Next.js, 
 
 ## Features
 
-- **User Management**: Simple name-based user system with random animal avatars
+- **User Management**: Name-based user system with random animal avatars
 - **Song Management**: Create, list, and edit songs
 - **Multi-Track Editing**: Support for multiple instrument tracks (Piano, Bass, Drums)
 - **Music Notation Interface**:
