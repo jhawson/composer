@@ -1,0 +1,84 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id        String   @id @default(cuid())
+  name      String
+  avatarIcon String  @map("avatar_icon") // animal emoji/icon identifier
+  createdAt DateTime @default(now()) @map("created_at")
+
+  chatMessages ChatMessage[]
+
+  @@map("users")
+}
+
+model Song {
+  id            String   @id @default(cuid())
+  name          String
+  tempo         Int      @default(100) // BPM
+  timeSignature String   @default("4/4") @map("time_signature")
+  bars          Int      @default(4)
+  createdAt     DateTime @default(now()) @map("created_at")
+  updatedAt     DateTime @updatedAt @map("updated_at")
+
+  tracks        Track[]
+  chatMessages  ChatMessage[]
+
+  @@map("songs")
+}
+
+model Track {
+  id             String   @id @default(cuid())
+  songId         String   @map("song_id")
+  instrumentType String   @map("instrument_type") // piano, bass, drums
+  volume         Float    @default(0.8) // 0.0 to 1.0
+  order          Int      // display order in the UI
+  createdAt      DateTime @default(now()) @map("created_at")
+  updatedAt      DateTime @updatedAt @map("updated_at")
+
+  song           Song     @relation(fields: [songId], references: [id], onDelete: Cascade)
+  notes          Note[]
+
+  @@map("tracks")
+  @@index([songId])
+}
+
+model Note {
+  id            String   @id @default(cuid())
+  trackId       String   @map("track_id")
+  pitch         String?  // MIDI note or null for drums (e.g., "C4", "D#5")
+  drumType      String?  @map("drum_type") // bass, snare, hihat, ride - only for drum tracks
+  duration      String   // whole, half, quarter, eighth, sixteenth
+  startPosition Float    @map("start_position") // position in 16th notes from start
+  createdAt     DateTime @default(now()) @map("created_at")
+  updatedAt     DateTime @updatedAt @map("updated_at")
+
+  track         Track    @relation(fields: [trackId], references: [id], onDelete: Cascade)
+
+  @@map("notes")
+  @@index([trackId])
+}
+
+model ChatMessage {
+  id        String   @id @default(cuid())
+  songId    String   @map("song_id")
+  userId    String   @map("user_id")
+  message   String
+  createdAt DateTime @default(now()) @map("created_at")
+
+  song      Song     @relation(fields: [songId], references: [id], onDelete: Cascade)
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("chat_messages")
+  @@index([songId])
+  @@index([userId])
+}
