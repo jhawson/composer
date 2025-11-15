@@ -136,7 +136,7 @@ export default function EditorPage() {
         </div>
 
         {/* Chat panel */}
-        <ChatPanel songId={song.id} socket={socket} />
+        <ChatPanel songId={song.id} socket={socket} messages={song.chatMessages || []} />
       </div>
     </div>
   );

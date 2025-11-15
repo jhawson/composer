@@ -4,6 +4,7 @@ import { useState, useRef } from 'react';
 import { Track, Song, Note, NOTE_DURATIONS, NoteDuration, DURATION_TO_SIXTEENTHS, DRUM_TYPES, DrumType } from '@/types';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Label } from '@/components/ui/label';
+import { audioEngine } from '@/lib/audio-engine';
 
 interface DrumEditorProps {
   track: Track;
@@ -30,6 +31,16 @@ export function DrumEditor({ track, song, socket }: DrumEditorProps) {
   const totalBeats = song.bars * beatsPerBar;
   const totalSixteenths = totalBeats * 4;
 
+  const drumTypeToNote = (drumType: string): string => {
+    const mapping: Record<string, string> = {
+      bass: 'C1',
+      snare: 'D1',
+      hihat: 'F1',
+      ride: 'A1',
+    };
+    return mapping[drumType] || 'C1';
+  };
+
   const handleCellClick = async (drumType: DrumType, position: number) => {
     // Check if there's already a note at this position and drum type
     const existingNote = track.notes.find(
@@ -48,6 +59,10 @@ export function DrumEditor({ track, song, socket }: DrumEditorProps) {
         console.error('Error deleting note:', error);
       }
     } else {
+      // Play the drum sound immediately
+      const drumNote = drumTypeToNote(drumType);
+      audioEngine.playNote('drums', drumNote, selectedDuration);
+
       // Add a new note
       try {
         const response = await fetch('/api/notes', {

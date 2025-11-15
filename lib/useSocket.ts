@@ -102,30 +102,52 @@ export function useSocket(options: UseSocketOptions) {
   // Helper functions to emit events
   const emitSongUpdate = (updates: Partial<Song>) => {
     socketRef.current?.emit('song-update', { songId, updates });
+    // Local update handled by caller
   };
 
   const emitTrackCreated = (track: Track) => {
     socketRef.current?.emit('track-created', { songId, track });
+    // Also update locally
+    if (onTrackCreated) {
+      onTrackCreated(track);
+    }
   };
 
   const emitTrackUpdate = (trackId: string, updates: Partial<Track>) => {
     socketRef.current?.emit('track-update', { songId, trackId, updates });
+    // Local update handled by caller
   };
 
   const emitTrackDeleted = (trackId: string) => {
     socketRef.current?.emit('track-deleted', { songId, trackId });
+    // Also update locally
+    if (onTrackDeleted) {
+      onTrackDeleted(trackId);
+    }
   };
 
   const emitNoteCreated = (trackId: string, note: Note) => {
     socketRef.current?.emit('note-created', { songId, trackId, note });
+    // Also update locally
+    if (onNoteCreated) {
+      onNoteCreated(trackId, note);
+    }
   };
 
   const emitNoteDeleted = (trackId: string, noteId: string) => {
     socketRef.current?.emit('note-deleted', { songId, trackId, noteId });
+    // Also update locally
+    if (onNoteDeleted) {
+      onNoteDeleted(trackId, noteId);
+    }
   };
 
   const emitChatMessage = (message: ChatMessage) => {
     socketRef.current?.emit('chat-message', { songId, message });
+    // Also update locally
+    if (onChatMessage) {
+      onChatMessage(message);
+    }
   };
 
   return {

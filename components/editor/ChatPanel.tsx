@@ -11,18 +11,14 @@ import { Send, MessageCircle } from 'lucide-react';
 interface ChatPanelProps {
   songId: string;
   socket: any;
+  messages: ChatMessage[];
 }
 
-export function ChatPanel({ songId, socket }: ChatPanelProps) {
-  const [messages, setMessages] = useState<ChatMessage[]>([]);
+export function ChatPanel({ songId, socket, messages }: ChatPanelProps) {
   const [newMessage, setNewMessage] = useState('');
   const [sending, setSending] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const user = useUserStore((state) => state.user);
-
-  useEffect(() => {
-    fetchMessages();
-  }, [songId]);
 
   useEffect(() => {
     scrollToBottom();
@@ -30,17 +26,6 @@ export function ChatPanel({ songId, socket }: ChatPanelProps) {
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-  };
-
-  const fetchMessages = async () => {
-    try {
-      const response = await fetch(`/api/chat?songId=${songId}`);
-      if (!response.ok) throw new Error('Failed to fetch messages');
-      const data = await response.json();
-      setMessages(data);
-    } catch (error) {
-      console.error('Error fetching messages:', error);
-    }
   };
 
   const handleSendMessage = async (e: React.FormEvent) => {

@@ -4,6 +4,7 @@ import { useState, useRef, useEffect } from 'react';
 import { Track, Song, Note, NOTE_DURATIONS, NoteDuration, DURATION_TO_SIXTEENTHS } from '@/types';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Label } from '@/components/ui/label';
+import { audioEngine } from '@/lib/audio-engine';
 
 interface PianoRollProps {
   track: Track;
@@ -49,6 +50,9 @@ export function PianoRoll({ track, song, socket }: PianoRollProps) {
         console.error('Error deleting note:', error);
       }
     } else {
+      // Play the note immediately
+      audioEngine.playNote(track.instrumentType, pitch, selectedDuration);
+
       // Add a new note
       try {
         const response = await fetch('/api/notes', {

@@ -5,6 +5,8 @@ export class AudioEngine {
   private static instance: AudioEngine;
   private players: Map<string, Tone.PolySynth | Tone.Sampler> = new Map();
   private drumSampler: Tone.Sampler | null = null;
+  private drumSamplerLoaded = false;
+  private drumSamplerLoadPromise: Promise<void> | null = null;
   private isPlaying = false;
   private currentPart: Tone.Part | null = null;
   private loop = false;
@@ -21,6 +23,87 @@ export class AudioEngine {
   async initialize() {
     await Tone.start();
     console.log('Audio engine initialized');
+    // Preload drum samples
+    await this.loadDrumSampler();
+  }
+
+  private async loadDrumSampler(): Promise<void> {
+    if (this.drumSamplerLoaded) {
+      return Promise.resolve();
+    }
+
+    if (this.drumSamplerLoadPromise) {
+      return this.drumSamplerLoadPromise;
+    }
+
+    // Use synthesized drums instead of samples to avoid loading issues
+    console.log('Creating synthesized drum kit');
+
+    // Create a custom synth for each drum type
+    const kickSynth = new Tone.MembraneSynth({
+      pitchDecay: 0.05,
+      octaves: 10,
+      oscillator: { type: 'sine' },
+      envelope: { attack: 0.001, decay: 0.4, sustain: 0.01, release: 1.4 }
+    }).toDestination();
+
+    const snareSynth = new Tone.NoiseSynth({
+      noise: { type: 'white' },
+      envelope: { attack: 0.001, decay: 0.2, sustain: 0 }
+    }).toDestination();
+
+    const hihatSynth = new Tone.MetalSynth({
+      frequency: 200,
+      envelope: { attack: 0.001, decay: 0.1, release: 0.01 },
+      harmonicity: 5.1,
+      modulationIndex: 32,
+      resonance: 4000,
+      octaves: 1.5
+    }).toDestination();
+
+    const rideSynth = new Tone.MetalSynth({
+      frequency: 300,
+      envelope: { attack: 0.001, decay: 0.4, release: 0.1 },
+      harmonicity: 3.1,
+      modulationIndex: 16,
+      resonance: 3000,
+      octaves: 1.5
+    }).toDestination();
+
+    // Create a custom drum sampler that maps to these synths
+    const drumKit = {
+      triggerAttackRelease: (note: string, duration: number, time?: number) => {
+        switch (note) {
+          case 'C1': // bass/kick
+            kickSynth.triggerAttackRelease('C1', duration, time);
+            break;
+          case 'D1': // snare
+            snareSynth.triggerAttackRelease(duration, time);
+            break;
+          case 'F1': // hihat
+            hihatSynth.triggerAttackRelease(duration, time);
+            break;
+          case 'A1': // ride
+            rideSynth.triggerAttackRelease(duration, time);
+            break;
+        }
+      },
+      volume: { value: 0 },
+      dispose: () => {
+        kickSynth.dispose();
+        snareSynth.dispose();
+        hihatSynth.dispose();
+        rideSynth.dispose();
+      }
+    };
+
+    this.drumSampler = drumKit as any;
+    this.drumSamplerLoaded = true;
+    this.players.set('drums', this.drumSampler);
+    console.log('Synthesized drum kit ready');
+
+    this.drumSamplerLoadPromise = Promise.resolve();
+    return this.drumSamplerLoadPromise;
   }
 
   private getOrCreateInstrument(instrumentType: string): Tone.PolySynth | Tone.Sampler {
@@ -31,17 +114,12 @@ export class AudioEngine {
     let instrument: Tone.PolySynth | Tone.Sampler;
 
     if (instrumentType === 'drums') {
-      // Create drum sampler if not exists
-      if (!this.drumSampler) {
-        this.drumSampler = new Tone.Sampler({
-          urls: {
-            C1: 'kick.wav',  // bass drum
-            D1: 'snare.wav', // snare
-            F1: 'hihat.wav', // hi-hat
-            A1: 'ride.wav',  // ride
-          },
-          baseUrl: 'https://tonejs.github.io/audio/drum-samples/acoustic-kit/',
-        }).toDestination();
+      // Return existing drum sampler or create a placeholder
+      if (this.drumSampler) {
+        instrument = this.drumSampler;
+      } else {
+        // This shouldn't happen if loadDrumSampler was called, but just in case
+        throw new Error('Drum sampler not initialized. Call loadDrumSampler() first.');
       }
       instrument = this.drumSampler;
     } else if (instrumentType === 'bass') {
@@ -128,6 +206,7 @@ export class AudioEngine {
 
     for (const track of tracksToPlay) {
       const instrument = this.getOrCreateInstrument(track.instrumentType);
+      console.log(`Track ${track.instrumentType}: ${track.notes.length} notes`);
 
       for (const note of track.notes) {
         const noteTime = this.positionToSeconds(note.startPosition, song.tempo);
@@ -136,6 +215,7 @@ export class AudioEngine {
         let pitch: string;
         if (note.drumType) {
           pitch = this.drumTypeToNote(note.drumType);
+          console.log(`Drum note: ${note.drumType} -> ${pitch} at ${noteTime}s`);
         } else if (note.pitch) {
           pitch = note.pitch;
         } else {
@@ -151,6 +231,8 @@ export class AudioEngine {
         });
       }
     }
+
+    console.log(`Total events scheduled: ${events.length}`);
 
     // Create a Tone.Part to schedule all events
     this.currentPart = new Tone.Part((time, event) => {
@@ -209,6 +291,21 @@ export class AudioEngine {
 
   getIsPlaying(): boolean {
     return this.isPlaying;
+  }
+
+  // Play a single note immediately (for preview when clicking)
+  async playNote(instrumentType: string, pitch: string, duration: NoteDuration = 'quarter') {
+    await this.initialize();
+
+    // For drums, ensure samples are loaded
+    if (instrumentType === 'drums' && !this.drumSamplerLoaded) {
+      console.log('Waiting for drum samples to load...');
+      await this.loadDrumSampler();
+    }
+
+    const instrument = this.getOrCreateInstrument(instrumentType);
+    const durationSeconds = this.durationToSeconds(duration, 120); // Use default tempo for preview
+    instrument.triggerAttackRelease(pitch, durationSeconds);
   }
 
   dispose() {
