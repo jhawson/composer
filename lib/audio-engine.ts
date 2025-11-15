@@ -10,6 +10,7 @@ export class AudioEngine {
   private isPlaying = false;
   private currentPart: Tone.Part | null = null;
   private loop = false;
+  private onStopCallback: (() => void) | null = null;
 
   private constructor() {}
 
@@ -280,6 +281,15 @@ export class AudioEngine {
     Tone.getTransport().stop();
     Tone.getTransport().cancel();
     this.isPlaying = false;
+
+    // Notify callback that playback stopped
+    if (this.onStopCallback) {
+      this.onStopCallback();
+    }
+  }
+
+  setOnStopCallback(callback: (() => void) | null) {
+    this.onStopCallback = callback;
   }
 
   setLoop(enabled: boolean) {

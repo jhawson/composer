@@ -15,7 +15,13 @@ export function PlaybackControls({ song }: PlaybackControlsProps) {
   const [isLooping, setIsLooping] = useState(false);
 
   useEffect(() => {
+    // Register callback to update UI when playback stops
+    audioEngine.setOnStopCallback(() => {
+      setIsPlaying(false);
+    });
+
     return () => {
+      audioEngine.setOnStopCallback(null);
       audioEngine.stop();
     };
   }, []);
