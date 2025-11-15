@@ -8,6 +8,7 @@ import { Label } from '@/components/ui/label';
 interface DrumEditorProps {
   track: Track;
   song: Song;
+  socket: any;
 }
 
 const CELL_WIDTH = 30;
@@ -20,7 +21,7 @@ const DRUM_LABELS: Record<DrumType, string> = {
   ride: 'Ride Cymbal',
 };
 
-export function DrumEditor({ track, song }: DrumEditorProps) {
+export function DrumEditor({ track, song, socket }: DrumEditorProps) {
   const [selectedDuration, setSelectedDuration] = useState<NoteDuration>('sixteenth');
   const canvasRef = useRef<HTMLDivElement>(null);
 
@@ -42,7 +43,7 @@ export function DrumEditor({ track, song }: DrumEditorProps) {
           method: 'DELETE',
         });
         if (!response.ok) throw new Error('Failed to delete note');
-        // Note: In a real app, we'd update the parent component
+        socket.emitNoteDeleted(track.id, existingNote.id);
       } catch (error) {
         console.error('Error deleting note:', error);
       }
@@ -60,7 +61,8 @@ export function DrumEditor({ track, song }: DrumEditorProps) {
           }),
         });
         if (!response.ok) throw new Error('Failed to create note');
-        // Note: In a real app, we'd update the parent component
+        const newNote = await response.json();
+        socket.emitNoteCreated(track.id, newNote);
       } catch (error) {
         console.error('Error creating note:', error);
       }

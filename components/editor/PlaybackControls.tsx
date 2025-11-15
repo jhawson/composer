@@ -1,9 +1,10 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Song } from '@/types';
 import { Play, Pause, Square, Repeat } from 'lucide-react';
+import { audioEngine } from '@/lib/audio-engine';
 
 interface PlaybackControlsProps {
   song: Song;
@@ -13,19 +14,35 @@ export function PlaybackControls({ song }: PlaybackControlsProps) {
   const [isPlaying, setIsPlaying] = useState(false);
   const [isLooping, setIsLooping] = useState(false);
 
-  const handlePlayPause = () => {
-    setIsPlaying(!isPlaying);
-    // TODO: Implement Tone.js playback
+  useEffect(() => {
+    return () => {
+      audioEngine.stop();
+    };
+  }, []);
+
+  const handlePlayPause = async () => {
+    if (isPlaying) {
+      audioEngine.pause();
+      setIsPlaying(false);
+    } else {
+      if (audioEngine.getIsPlaying()) {
+        audioEngine.resume();
+      } else {
+        await audioEngine.play(song);
+      }
+      setIsPlaying(true);
+    }
   };
 
   const handleStop = () => {
+    audioEngine.stop();
     setIsPlaying(false);
-    // TODO: Implement Tone.js stop
   };
 
   const handleToggleLoop = () => {
-    setIsLooping(!isLooping);
-    // TODO: Implement Tone.js loop
+    const newLoopState = !isLooping;
+    setIsLooping(newLoopState);
+    audioEngine.setLoop(newLoopState);
   };
 
   return (

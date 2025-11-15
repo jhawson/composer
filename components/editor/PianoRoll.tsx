@@ -8,6 +8,7 @@ import { Label } from '@/components/ui/label';
 interface PianoRollProps {
   track: Track;
   song: Song;
+  socket: any;
 }
 
 // MIDI notes from C3 to C6
@@ -20,7 +21,7 @@ const NOTES = [
 const CELL_WIDTH = 30;
 const CELL_HEIGHT = 20;
 
-export function PianoRoll({ track, song }: PianoRollProps) {
+export function PianoRoll({ track, song, socket }: PianoRollProps) {
   const [selectedDuration, setSelectedDuration] = useState<NoteDuration>('quarter');
   const canvasRef = useRef<HTMLDivElement>(null);
 
@@ -43,7 +44,7 @@ export function PianoRoll({ track, song }: PianoRollProps) {
           method: 'DELETE',
         });
         if (!response.ok) throw new Error('Failed to delete note');
-        // Note: In a real app, we'd update the parent component
+        socket.emitNoteDeleted(track.id, existingNote.id);
       } catch (error) {
         console.error('Error deleting note:', error);
       }
@@ -61,7 +62,8 @@ export function PianoRoll({ track, song }: PianoRollProps) {
           }),
         });
         if (!response.ok) throw new Error('Failed to create note');
-        // Note: In a real app, we'd update the parent component
+        const newNote = await response.json();
+        socket.emitNoteCreated(track.id, newNote);
       } catch (error) {
         console.error('Error creating note:', error);
       }

@@ -10,9 +10,10 @@ import { Send, MessageCircle } from 'lucide-react';
 
 interface ChatPanelProps {
   songId: string;
+  socket: any;
 }
 
-export function ChatPanel({ songId }: ChatPanelProps) {
+export function ChatPanel({ songId, socket }: ChatPanelProps) {
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [newMessage, setNewMessage] = useState('');
   const [sending, setSending] = useState(false);
@@ -21,7 +22,6 @@ export function ChatPanel({ songId }: ChatPanelProps) {
 
   useEffect(() => {
     fetchMessages();
-    // TODO: Set up WebSocket connection for real-time messages
   }, [songId]);
 
   useEffect(() => {
@@ -62,7 +62,7 @@ export function ChatPanel({ songId }: ChatPanelProps) {
       if (!response.ok) throw new Error('Failed to send message');
 
       const chatMessage = await response.json();
-      setMessages([...messages, chatMessage]);
+      socket.emitChatMessage(chatMessage);
       setNewMessage('');
     } catch (error) {
       console.error('Error sending message:', error);

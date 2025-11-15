@@ -3,11 +3,13 @@
 import { useEffect, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { useUserStore } from '@/lib/store';
-import { Song } from '@/types';
+import { Song, User, Track, Note, ChatMessage } from '@/types';
 import { SongHeader } from '@/components/editor/SongHeader';
 import { TrackList } from '@/components/editor/TrackList';
 import { ChatPanel } from '@/components/editor/ChatPanel';
 import { PlaybackControls } from '@/components/editor/PlaybackControls';
+import { PresenceIndicator } from '@/components/editor/PresenceIndicator';
+import { useSocket } from '@/lib/useSocket';
 
 export default function EditorPage() {
   const params = useParams();
@@ -15,6 +17,7 @@ export default function EditorPage() {
   const user = useUserStore((state) => state.user);
   const [song, setSong] = useState<Song | null>(null);
   const [loading, setLoading] = useState(true);
+  const [presentUsers, setPresentUsers] = useState<User[]>([]);
 
   useEffect(() => {
     // Check if user is logged in
@@ -46,9 +49,61 @@ export default function EditorPage() {
     }
   };
 
+  // WebSocket integration for real-time collaboration
+  const socket = useSocket({
+    songId: params.id as string,
+    user,
+    onPresenceUpdate: (users) => setPresentUsers(users),
+    onSongUpdate: (updates) => {
+      if (song) {
+        setSong({ ...song, ...updates });
+      }
+    },
+    onTrackCreated: (track) => {
+      if (song) {
+        setSong({ ...song, tracks: [...song.tracks, track] });
+      }
+    },
+    onTrackUpdated: (trackId, updates) => {
+      if (song) {
+        const updatedTracks = song.tracks.map((t) =>
+          t.id === trackId ? { ...t, ...updates } : t
+        );
+        setSong({ ...song, tracks: updatedTracks });
+      }
+    },
+    onTrackDeleted: (trackId) => {
+      if (song) {
+        setSong({ ...song, tracks: song.tracks.filter((t) => t.id !== trackId) });
+      }
+    },
+    onNoteCreated: (trackId, note) => {
+      if (song) {
+        const updatedTracks = song.tracks.map((t) =>
+          t.id === trackId ? { ...t, notes: [...t.notes, note] } : t
+        );
+        setSong({ ...song, tracks: updatedTracks });
+      }
+    },
+    onNoteDeleted: (trackId, noteId) => {
+      if (song) {
+        const updatedTracks = song.tracks.map((t) =>
+          t.id === trackId ? { ...t, notes: t.notes.filter((n) => n.id !== noteId) } : t
+        );
+        setSong({ ...song, tracks: updatedTracks });
+      }
+    },
+    onChatMessage: (message) => {
+      if (song) {
+        setSong({ ...song, chatMessages: [...(song.chatMessages || []), message] });
+      }
+    },
+  });
+
   const updateSong = (updates: Partial<Song>) => {
     if (song) {
       setSong({ ...song, ...updates });
+      socket.emitSongUpdate(updates);
     }
   };
 
@@ -62,8 +117,13 @@ export default function EditorPage() {
 
   return (
     <div className="h-screen flex flex-col bg-background">
-      {/* Header with song metadata controls */}
-      <SongHeader song={song} onUpdate={updateSong} />
+      {/* Header with song metadata controls and presence */}
+      <div className="border-b bg-card">
+        <div className="flex items-center justify-between px-4 py-2">
+          <SongHeader song={song} onUpdate={updateSong} />
+          <PresenceIndicator users={presentUsers} />
+        </div>
+      </div>
 
       {/* Playback controls */}
       <PlaybackControls song={song} />
@@ -72,11 +132,11 @@ export default function EditorPage() {
       <div className="flex-1 flex overflow-hidden">
         {/* Track editor area */}
         <div className="flex-1 overflow-auto">
-          <TrackList song={song} onUpdate={updateSong} />
+          <TrackList song={song} onUpdate={updateSong} socket={socket} />
         </div>
 
         {/* Chat panel */}
-        <ChatPanel songId={song.id} />
+        <ChatPanel songId={song.id} socket={socket} />
       </div>
     </div>
   );

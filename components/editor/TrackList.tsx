@@ -9,9 +9,10 @@ import { Plus } from 'lucide-react';
 interface TrackListProps {
   song: Song;
   onUpdate: (updates: Partial<Song>) => void;
+  socket: any;
 }
 
-export function TrackList({ song, onUpdate }: TrackListProps) {
+export function TrackList({ song, onUpdate, socket }: TrackListProps) {
   const [creating, setCreating] = useState(false);
 
   const handleAddTrack = async (instrumentType: string) => {
@@ -32,6 +33,7 @@ export function TrackList({ song, onUpdate }: TrackListProps) {
       onUpdate({
         tracks: [...song.tracks, newTrack],
       });
+      socket.emitTrackCreated(newTrack);
     } catch (error) {
       console.error('Error creating track:', error);
       alert('Failed to add track');
@@ -60,6 +62,7 @@ export function TrackList({ song, onUpdate }: TrackListProps) {
       onUpdate({
         tracks: song.tracks.filter((track) => track.id !== trackId),
       });
+      socket.emitTrackDeleted(trackId);
     } catch (error) {
       console.error('Error deleting track:', error);
       alert('Failed to delete track');
@@ -81,6 +84,7 @@ export function TrackList({ song, onUpdate }: TrackListProps) {
           song={song}
           onUpdate={(updates) => handleUpdateTrack(track.id, updates)}
           onDelete={() => handleDeleteTrack(track.id)}
+          socket={socket}
         />
       ))}
 
