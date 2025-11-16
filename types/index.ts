@@ -54,7 +54,7 @@ export type DrumType = 'bass' | 'snare' | 'hihat' | 'ride';
 
 export const NOTE_DURATIONS: NoteDuration[] = ['whole', 'half', 'quarter', 'eighth', 'sixteenth'];
 export const INSTRUMENT_TYPES: InstrumentType[] = ['piano', 'bass', 'drums'];
-export const DRUM_TYPES: DrumType[] = ['bass', 'snare', 'hihat', 'ride'];
+export const DRUM_TYPES: DrumType[] = ['ride', 'hihat', 'snare', 'bass'];
 
 // Duration to number of 16th notes
 export const DURATION_TO_SIXTEENTHS: Record<NoteDuration, number> = {

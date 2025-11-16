@@ -115,11 +115,15 @@ export function DrumEditor({ track, song, socket }: DrumEditorProps) {
           <div className="flex">
             {/* Drum type labels */}
             <div className="sticky left-0 z-10 bg-muted border-r">
-              {DRUM_TYPES.map((drumType) => (
+              {DRUM_TYPES.map((drumType, drumIndex) => (
                 <div
                   key={drumType}
-                  className="flex items-center justify-center text-xs font-medium border-b px-3"
-                  style={{ height: CELL_HEIGHT, width: 100 }}
+                  className="flex items-center justify-center text-xs font-medium px-3"
+                  style={{
+                    height: CELL_HEIGHT,
+                    width: 100,
+                    borderBottom: drumIndex < DRUM_TYPES.length - 1 ? '1px solid hsl(var(--border))' : 'none'
+                  }}
                 >
                   {DRUM_LABELS[drumType]}
                 </div>
@@ -128,8 +132,8 @@ export function DrumEditor({ track, song, socket }: DrumEditorProps) {
 
             {/* Grid */}
             <div>
-              {DRUM_TYPES.map((drumType) => (
-                <div key={drumType} className="flex border-b">
+              {DRUM_TYPES.map((drumType, drumIndex) => (
+                <div key={drumType} className="flex" style={{ borderBottom: drumIndex < DRUM_TYPES.length - 1 ? '1px solid hsl(var(--border))' : 'none' }}>
                   {Array.from({ length: totalSixteenths }).map((_, posIndex) => {
                     const existingNote = isNoteAt(drumType, posIndex);
                     const isStart = existingNote && existingNote.startPosition === posIndex;

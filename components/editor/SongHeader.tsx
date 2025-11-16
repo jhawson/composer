@@ -38,8 +38,13 @@ export function SongHeader({ song, onUpdate }: SongHeaderProps) {
 
       if (!response.ok) throw new Error('Failed to update song');
 
-      const updated = await response.json();
-      onUpdate(updated);
+      // Only pass the changed fields, not the full song object
+      onUpdate({
+        name,
+        tempo: parseInt(tempo),
+        timeSignature,
+        bars: parseInt(bars),
+      });
     } catch (error) {
       console.error('Error updating song:', error);
       alert('Failed to save changes');

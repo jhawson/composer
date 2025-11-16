@@ -105,11 +105,15 @@ export function PianoRoll({ track, song, socket }: PianoRollProps) {
           <div className="flex">
             {/* Note labels */}
             <div className="sticky left-0 z-10 bg-muted border-r">
-              {NOTES.map((note) => (
+              {NOTES.map((note, noteIndex) => (
                 <div
                   key={note}
-                  className="flex items-center justify-center text-xs font-mono border-b"
-                  style={{ height: CELL_HEIGHT, width: 50 }}
+                  className="flex items-center justify-center text-xs font-mono"
+                  style={{
+                    height: CELL_HEIGHT,
+                    width: 100,
+                    borderBottom: noteIndex < NOTES.length - 1 ? '1px solid hsl(var(--border))' : 'none'
+                  }}
                 >
                   {note}
                 </div>
@@ -119,7 +123,7 @@ export function PianoRoll({ track, song, socket }: PianoRollProps) {
             {/* Grid */}
             <div>
               {NOTES.map((note, noteIndex) => (
-                <div key={note} className="flex border-b">
+                <div key={note} className="flex" style={{ borderBottom: noteIndex < NOTES.length - 1 ? '1px solid hsl(var(--border))' : 'none' }}>
                   {Array.from({ length: totalSixteenths }).map((_, posIndex) => {
                     const existingNote = isNoteAt(note, posIndex);
                     const isStart = existingNote && existingNote.startPosition === posIndex;
