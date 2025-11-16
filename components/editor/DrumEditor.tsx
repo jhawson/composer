@@ -114,15 +114,22 @@ export function DrumEditor({ track, song, socket }: DrumEditorProps) {
           {/* Drum editor grid */}
           <div className="flex">
             {/* Drum type labels */}
-            <div className="sticky left-0 z-10 bg-muted border-r">
+            <div className="sticky left-0 z-10 bg-muted border-r" style={{ display: 'flex', flexDirection: 'column' }}>
               {DRUM_TYPES.map((drumType, drumIndex) => (
                 <div
                   key={drumType}
-                  className="flex items-center justify-center text-xs font-medium px-3"
                   style={{
-                    height: CELL_HEIGHT,
-                    width: 100,
-                    borderBottom: drumIndex < DRUM_TYPES.length - 1 ? '1px solid hsl(var(--border))' : 'none'
+                    height: `${CELL_HEIGHT}px`,
+                    width: '100px',
+                    borderBottom: drumIndex < DRUM_TYPES.length - 1 ? '1px solid hsl(var(--border))' : 'none',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    fontSize: '0.75rem',
+                    fontWeight: 500,
+                    paddingLeft: '0.75rem',
+                    paddingRight: '0.75rem',
+                    boxSizing: 'border-box'
                   }}
                 >
                   {DRUM_LABELS[drumType]}
@@ -133,7 +140,7 @@ export function DrumEditor({ track, song, socket }: DrumEditorProps) {
             {/* Grid */}
             <div>
               {DRUM_TYPES.map((drumType, drumIndex) => (
-                <div key={drumType} className="flex" style={{ borderBottom: drumIndex < DRUM_TYPES.length - 1 ? '1px solid hsl(var(--border))' : 'none' }}>
+                <div key={drumType} className="flex">
                   {Array.from({ length: totalSixteenths }).map((_, posIndex) => {
                     const existingNote = isNoteAt(drumType, posIndex);
                     const isStart = existingNote && existingNote.startPosition === posIndex;
@@ -144,7 +151,7 @@ export function DrumEditor({ track, song, socket }: DrumEditorProps) {
                     return (
                       <div
                         key={posIndex}
-                        className={`border-r cursor-pointer transition-colors ${
+                        className={`border-r ${drumIndex < DRUM_TYPES.length - 1 ? 'border-b' : ''} cursor-pointer transition-colors ${
                           existingNote
                             ? isStart
                               ? 'bg-primary hover:bg-primary/80'
@@ -152,8 +159,9 @@ export function DrumEditor({ track, song, socket }: DrumEditorProps) {
                             : 'hover:bg-accent'
                         } ${isBarStart ? 'border-l-2 border-l-foreground' : isBeatStart ? 'border-l border-l-muted-foreground/30' : ''}`}
                         style={{
-                          width: CELL_WIDTH,
-                          height: CELL_HEIGHT,
+                          width: `${CELL_WIDTH}px`,
+                          height: `${CELL_HEIGHT}px`,
+                          boxSizing: 'border-box'
                         }}
                         onClick={() => handleCellClick(drumType, posIndex)}
                       />

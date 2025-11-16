@@ -104,15 +104,20 @@ export function PianoRoll({ track, song, socket }: PianoRollProps) {
           {/* Piano roll grid */}
           <div className="flex">
             {/* Note labels */}
-            <div className="sticky left-0 z-10 bg-muted border-r">
+            <div className="sticky left-0 z-10 bg-muted border-r" style={{ display: 'flex', flexDirection: 'column' }}>
               {NOTES.map((note, noteIndex) => (
                 <div
                   key={note}
-                  className="flex items-center justify-center text-xs font-mono"
                   style={{
-                    height: CELL_HEIGHT,
-                    width: 100,
-                    borderBottom: noteIndex < NOTES.length - 1 ? '1px solid hsl(var(--border))' : 'none'
+                    height: `${CELL_HEIGHT}px`,
+                    width: '100px',
+                    borderBottom: noteIndex < NOTES.length - 1 ? '1px solid hsl(var(--border))' : 'none',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    fontSize: '0.75rem',
+                    fontFamily: 'monospace',
+                    boxSizing: 'border-box'
                   }}
                 >
                   {note}
@@ -123,7 +128,7 @@ export function PianoRoll({ track, song, socket }: PianoRollProps) {
             {/* Grid */}
             <div>
               {NOTES.map((note, noteIndex) => (
-                <div key={note} className="flex" style={{ borderBottom: noteIndex < NOTES.length - 1 ? '1px solid hsl(var(--border))' : 'none' }}>
+                <div key={note} className="flex">
                   {Array.from({ length: totalSixteenths }).map((_, posIndex) => {
                     const existingNote = isNoteAt(note, posIndex);
                     const isStart = existingNote && existingNote.startPosition === posIndex;
@@ -134,7 +139,7 @@ export function PianoRoll({ track, song, socket }: PianoRollProps) {
                     return (
                       <div
                         key={posIndex}
-                        className={`border-r cursor-pointer transition-colors ${
+                        className={`border-r ${noteIndex < NOTES.length - 1 ? 'border-b' : ''} cursor-pointer transition-colors ${
                           existingNote
                             ? isStart
                               ? 'bg-primary hover:bg-primary/80'
@@ -144,8 +149,9 @@ export function PianoRoll({ track, song, socket }: PianoRollProps) {
                             : 'hover:bg-accent'
                         } ${isBarStart ? 'border-l-2 border-l-foreground' : isBeatStart ? 'border-l border-l-muted-foreground/30' : ''}`}
                         style={{
-                          width: CELL_WIDTH,
-                          height: CELL_HEIGHT,
+                          width: `${CELL_WIDTH}px`,
+                          height: `${CELL_HEIGHT}px`,
+                          boxSizing: 'border-box'
                         }}
                         onClick={() => handleCellClick(note, posIndex)}
                       />

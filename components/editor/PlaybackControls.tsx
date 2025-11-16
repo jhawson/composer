@@ -67,7 +67,7 @@ export function PlaybackControls({ song }: PlaybackControlsProps) {
           ) : (
             <>
               <Play className="h-4 w-4 mr-2" />
-              Play All
+              Play
             </>
           )}
         </Button>
