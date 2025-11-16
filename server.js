@@ -65,36 +65,43 @@ app.prepare().then(() => {
 
     // Song updates
     socket.on('song-update', ({ songId, updates }) => {
+      console.log('[server] Received song-update:', { songId, socketId: socket.id });
       socket.to(`song:${songId}`).emit('song-updated', updates);
     });
 
     // Track updates
     socket.on('track-update', ({ songId, trackId, updates }) => {
+      console.log('[server] Received track-update:', { songId, trackId, socketId: socket.id });
       socket.to(`song:${songId}`).emit('track-updated', { trackId, updates });
     });
 
     // Track created
     socket.on('track-created', ({ songId, track }) => {
+      console.log('[server] Received track-created:', { songId, trackId: track?.id, socketId: socket.id });
       socket.to(`song:${songId}`).emit('track-created', track);
     });
 
     // Track deleted
     socket.on('track-deleted', ({ songId, trackId }) => {
+      console.log('[server] Received track-deleted:', { songId, trackId, socketId: socket.id });
       socket.to(`song:${songId}`).emit('track-deleted', trackId);
     });
 
     // Note created
     socket.on('note-created', ({ songId, trackId, note }) => {
+      console.log('[server] Received note-created:', { songId, trackId, noteId: note?.id, socketId: socket.id });
       socket.to(`song:${songId}`).emit('note-created', { trackId, note });
     });
 
     // Note deleted
     socket.on('note-deleted', ({ songId, trackId, noteId }) => {
+      console.log('[server] Received note-deleted:', { songId, trackId, noteId, socketId: socket.id });
       socket.to(`song:${songId}`).emit('note-deleted', { trackId, noteId });
     });
 
     // Chat message
     socket.on('chat-message', ({ songId, message }) => {
+      console.log('[server] Received chat-message:', { songId, messageId: message?.id, socketId: socket.id });
       io.to(`song:${songId}`).emit('chat-message', message);
     });
 
