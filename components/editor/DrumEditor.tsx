@@ -16,10 +16,12 @@ const CELL_WIDTH = 30;
 const CELL_HEIGHT = 40;
 
 const DRUM_LABELS: Record<DrumType, string> = {
-  bass: 'Bass Drum',
+  kick: 'Kick',
   snare: 'Snare',
   hihat: 'Hi-Hat',
-  ride: 'Ride Cymbal',
+  tom1: 'Tom 1',
+  tom2: 'Tom 2',
+  tom3: 'Tom 3',
 };
 
 export function DrumEditor({ track, song, socket }: DrumEditorProps) {
