@@ -10,6 +10,12 @@ export class AudioEngine {
   private pianoSampler: Tone.Sampler | null = null;
   private pianoSamplerLoaded = false;
   private pianoSamplerLoadPromise: Promise<void> | null = null;
+  private organSampler: Tone.Sampler | null = null;
+  private bassGuitarSampler: Tone.Sampler | null = null;
+  private acousticGuitarSampler: Tone.Sampler | null = null;
+  private celloSampler: Tone.Sampler | null = null;
+  private samplersLoaded: Record<string, boolean> = {};
+  private samplersLoadPromises: Record<string, Promise<void> | null> = {};
   private isPlaying = false;
   private currentPart: Tone.Part | null = null;
   private loop = false;
@@ -27,10 +33,14 @@ export class AudioEngine {
   async initialize() {
     await Tone.start();
     console.log('Audio engine initialized');
-    // Preload piano and drum samples
+    // Preload all instrument samples
     await Promise.all([
       this.loadPianoSampler(),
-      this.loadDrumSampler()
+      this.loadDrumSampler(),
+      this.loadOrganSampler(),
+      this.loadBassGuitarSampler(),
+      this.loadAcousticGuitarSampler(),
+      this.loadCelloSampler()
     ]);
   }
 
@@ -135,6 +145,168 @@ export class AudioEngine {
     return this.pianoSamplerLoadPromise;
   }
 
+  private async loadOrganSampler(): Promise<void> {
+    if (this.samplersLoaded['organ']) {
+      return Promise.resolve();
+    }
+
+    if (this.samplersLoadPromises['organ']) {
+      return this.samplersLoadPromises['organ']!;
+    }
+
+    console.log('Loading organ samples from CDN...');
+
+    this.samplersLoadPromises['organ'] = new Promise<void>((resolve, reject) => {
+      this.organSampler = new Tone.Sampler({
+        urls: {
+          C3: 'C3.mp3',
+          C4: 'C4.mp3',
+          C5: 'C5.mp3',
+          C6: 'C6.mp3'
+        },
+        baseUrl: 'https://raw.githubusercontent.com/nbrosowsky/tonejs-instruments/master/samples/organ/',
+        release: 1,
+        onload: () => {
+          console.log('Organ samples loaded successfully');
+          this.samplersLoaded['organ'] = true;
+          this.players.set('organ', this.organSampler!);
+          resolve();
+        },
+        onerror: (err) => {
+          console.error('Failed to load organ samples:', err);
+          reject(err);
+        }
+      }).toDestination();
+    });
+
+    return this.samplersLoadPromises['organ'];
+  }
+
+  private async loadBassGuitarSampler(): Promise<void> {
+    if (this.samplersLoaded['bass-guitar']) {
+      return Promise.resolve();
+    }
+
+    if (this.samplersLoadPromises['bass-guitar']) {
+      return this.samplersLoadPromises['bass-guitar']!;
+    }
+
+    console.log('Loading bass guitar samples from CDN...');
+
+    this.samplersLoadPromises['bass-guitar'] = new Promise<void>((resolve, reject) => {
+      this.bassGuitarSampler = new Tone.Sampler({
+        urls: {
+          'A#1': 'As1.mp3',
+          'A#2': 'As2.mp3',
+          'A#3': 'As3.mp3'
+        },
+        baseUrl: 'https://raw.githubusercontent.com/nbrosowsky/tonejs-instruments/master/samples/bass-electric/',
+        release: 1,
+        onload: () => {
+          console.log('Bass guitar samples loaded successfully');
+          this.samplersLoaded['bass-guitar'] = true;
+          this.players.set('bass-guitar', this.bassGuitarSampler!);
+          resolve();
+        },
+        onerror: (err) => {
+          console.error('Failed to load bass guitar samples:', err);
+          reject(err);
+        }
+      }).toDestination();
+    });
+
+    return this.samplersLoadPromises['bass-guitar'];
+  }
+
+  private async loadAcousticGuitarSampler(): Promise<void> {
+    if (this.samplersLoaded['acoustic-guitar']) {
+      return Promise.resolve();
+    }
+
+    if (this.samplersLoadPromises['acoustic-guitar']) {
+      return this.samplersLoadPromises['acoustic-guitar']!;
+    }
+
+    console.log('Loading acoustic guitar samples from CDN...');
+
+    this.samplersLoadPromises['acoustic-guitar'] = new Promise<void>((resolve, reject) => {
+      this.acousticGuitarSampler = new Tone.Sampler({
+        urls: {
+          'A2': 'A2.mp3',
+          'A3': 'A3.mp3',
+          'A4': 'A4.mp3',
+          'C3': 'C3.mp3',
+          'C4': 'C4.mp3',
+          'C5': 'C5.mp3',
+          'F2': 'F2.mp3',
+          'F3': 'F3.mp3',
+          'F4': 'F4.mp3'
+        },
+        baseUrl: 'https://raw.githubusercontent.com/nbrosowsky/tonejs-instruments/master/samples/guitar-acoustic/',
+        release: 1,
+        onload: () => {
+          console.log('Acoustic guitar samples loaded successfully');
+          this.samplersLoaded['acoustic-guitar'] = true;
+          this.players.set('acoustic-guitar', this.acousticGuitarSampler!);
+          resolve();
+        },
+        onerror: (err) => {
+          console.error('Failed to load acoustic guitar samples:', err);
+          reject(err);
+        }
+      }).toDestination();
+    });
+
+    return this.samplersLoadPromises['acoustic-guitar'];
+  }
+
+  private async loadCelloSampler(): Promise<void> {
+    if (this.samplersLoaded['cello']) {
+      return Promise.resolve();
+    }
+
+    if (this.samplersLoadPromises['cello']) {
+      return this.samplersLoadPromises['cello']!;
+    }
+
+    console.log('Loading cello samples from CDN...');
+
+    this.samplersLoadPromises['cello'] = new Promise<void>((resolve, reject) => {
+      this.celloSampler = new Tone.Sampler({
+        urls: {
+          'A#2': 'As2.mp3',
+          'A#3': 'As3.mp3',
+          C2: 'C2.mp3',
+          C3: 'C3.mp3',
+          C4: 'C4.mp3',
+          C5: 'C5.mp3',
+          'D#2': 'Ds2.mp3',
+          'D#3': 'Ds3.mp3',
+          'D#4': 'Ds4.mp3',
+          'F#3': 'Fs3.mp3',
+          'F#4': 'Fs4.mp3',
+          'G#2': 'Gs2.mp3',
+          'G#3': 'Gs3.mp3',
+          'G#4': 'Gs4.mp3'
+        },
+        baseUrl: 'https://raw.githubusercontent.com/nbrosowsky/tonejs-instruments/master/samples/cello/',
+        release: 1,
+        onload: () => {
+          console.log('Cello samples loaded successfully');
+          this.samplersLoaded['cello'] = true;
+          this.players.set('cello', this.celloSampler!);
+          resolve();
+        },
+        onerror: (err) => {
+          console.error('Failed to load cello samples:', err);
+          reject(err);
+        }
+      }).toDestination();
+    });
+
+    return this.samplersLoadPromises['cello'];
+  }
+
   private getOrCreateInstrument(instrumentType: string): Tone.PolySynth | Tone.Sampler {
     if (this.players.has(instrumentType)) {
       return this.players.get(instrumentType)!;
@@ -143,45 +315,47 @@ export class AudioEngine {
     let instrument: Tone.PolySynth | Tone.Sampler;
 
     if (instrumentType === 'drums') {
-      // Return existing drum sampler
       if (this.drumSampler) {
         instrument = this.drumSampler;
       } else {
-        throw new Error('Drum sampler not initialized. Call loadDrumSampler() first.');
+        throw new Error('Drum sampler not initialized.');
       }
     } else if (instrumentType === 'piano') {
-      // Return existing piano sampler
       if (this.pianoSampler) {
         instrument = this.pianoSampler;
       } else {
-        throw new Error('Piano sampler not initialized. Call loadPianoSampler() first.');
+        throw new Error('Piano sampler not initialized.');
       }
-    } else if (instrumentType === 'bass') {
-      // Bass synth (keep synthesized for now)
-      instrument = new Tone.PolySynth(Tone.Synth, {
-        oscillator: { type: 'triangle' },
-        envelope: {
-          attack: 0.01,
-          decay: 0.3,
-          sustain: 0.4,
-          release: 0.8,
-        },
-      }).toDestination();
+    } else if (instrumentType === 'organ') {
+      if (this.organSampler) {
+        instrument = this.organSampler;
+      } else {
+        throw new Error('Organ sampler not initialized.');
+      }
+    } else if (instrumentType === 'bass-guitar') {
+      if (this.bassGuitarSampler) {
+        instrument = this.bassGuitarSampler;
+      } else {
+        throw new Error('Bass guitar sampler not initialized.');
+      }
+    } else if (instrumentType === 'acoustic-guitar') {
+      if (this.acousticGuitarSampler) {
+        instrument = this.acousticGuitarSampler;
+      } else {
+        throw new Error('Acoustic guitar sampler not initialized.');
+      }
+    } else if (instrumentType === 'cello') {
+      if (this.celloSampler) {
+        instrument = this.celloSampler;
+      } else {
+        throw new Error('Cello sampler not initialized.');
+      }
     } else {
-      // Default to piano sampler for unknown instrument types
+      // Fallback to piano for unknown types
       if (this.pianoSampler) {
         instrument = this.pianoSampler;
       } else {
-        // Fallback to synth if piano not loaded
-        instrument = new Tone.PolySynth(Tone.Synth, {
-          oscillator: { type: 'sine' },
-          envelope: {
-            attack: 0.005,
-            decay: 0.2,
-            sustain: 0.3,
-            release: 1,
-          },
-        }).toDestination();
+        throw new Error('No instrument sampler available.');
       }
     }
 
@@ -382,6 +556,22 @@ export class AudioEngine {
     if (this.pianoSampler) {
       this.pianoSampler.dispose();
       this.pianoSampler = null;
+    }
+    if (this.organSampler) {
+      this.organSampler.dispose();
+      this.organSampler = null;
+    }
+    if (this.bassGuitarSampler) {
+      this.bassGuitarSampler.dispose();
+      this.bassGuitarSampler = null;
+    }
+    if (this.acousticGuitarSampler) {
+      this.acousticGuitarSampler.dispose();
+      this.acousticGuitarSampler = null;
+    }
+    if (this.celloSampler) {
+      this.celloSampler.dispose();
+      this.celloSampler = null;
     }
   }
 }

@@ -49,11 +49,11 @@ export interface ChatMessage {
 }
 
 export type NoteDuration = 'whole' | 'half' | 'quarter' | 'eighth' | 'sixteenth';
-export type InstrumentType = 'piano' | 'bass' | 'drums';
+export type InstrumentType = 'piano' | 'drums' | 'organ' | 'bass-guitar' | 'acoustic-guitar' | 'cello';
 export type DrumType = 'kick' | 'snare' | 'hihat' | 'tom1' | 'tom2' | 'tom3';
 
 export const NOTE_DURATIONS: NoteDuration[] = ['whole', 'half', 'quarter', 'eighth', 'sixteenth'];
-export const INSTRUMENT_TYPES: InstrumentType[] = ['piano', 'bass', 'drums'];
+export const INSTRUMENT_TYPES: InstrumentType[] = ['piano', 'drums', 'organ', 'bass-guitar', 'acoustic-guitar', 'cello'];
 export const DRUM_TYPES: DrumType[] = ['tom3', 'tom2', 'tom1', 'hihat', 'snare', 'kick'];
 
 // Duration to number of 16th notes
