@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Slider } from '@/components/ui/slider';
-import { Song, Track, INSTRUMENT_TYPES } from '@/types';
+import { Song, Track, INSTRUMENT_TYPES, DRUM_KITS } from '@/types';
 import { ChevronDown, ChevronUp, Trash2, Volume2 } from 'lucide-react';
 import { PianoRoll } from './PianoRoll';
 import { DrumEditor } from './DrumEditor';
@@ -64,6 +64,28 @@ export function TrackEditor({ track, song, onUpdate, onDelete, socket }: TrackEd
     }
   };
 
+  const handleDrumKitChange = async (drumKit: string) => {
+    setUpdating(true);
+    try {
+      const response = await fetch(`/api/tracks/${track.id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ drumKit }),
+      });
+
+      if (!response.ok) throw new Error('Failed to update drum kit');
+
+      const updated = await response.json();
+      onUpdate(updated);
+      socket.emitTrackUpdate(track.id, { drumKit });
+    } catch (error) {
+      console.error('Error updating drum kit:', error);
+      alert('Failed to update drum kit');
+    } finally {
+      setUpdating(false);
+    }
+  };
+
   return (
     <Card className="overflow-hidden">
       <div className="p-3 bg-muted/50 flex items-center justify-between gap-4">
@@ -93,6 +115,25 @@ export function TrackEditor({ track, song, onUpdate, onDelete, socket }: TrackEd
             </SelectContent>
           </Select>
 
+          {track.instrumentType === 'drums' && (
+            <Select
+              value={track.drumKit || 'breakbeat13'}
+              onValueChange={handleDrumKitChange}
+              disabled={updating}
+            >
+              <SelectTrigger className="w-40">
+                <SelectValue placeholder="Select drum kit" />
+              </SelectTrigger>
+              <SelectContent>
+                {DRUM_KITS.map((kit) => (
+                  <SelectItem key={kit} value={kit}>
+                    {kit}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          )}
+
           <div className="flex items-center gap-2 flex-1 max-w-xs">
             <Volume2 className="h-4 w-4 text-muted-foreground" />
             <Slider
@@ -119,7 +160,7 @@ export function TrackEditor({ track, song, onUpdate, onDelete, socket }: TrackEd
       {!collapsed && (
         <div className="p-4 bg-background">
           {track.instrumentType === 'drums' ? (
-            <DrumEditor track={track} song={song} socket={socket} />
+            <DrumEditor track={track} song={song} socket={socket} drumKit={track.drumKit || 'breakbeat13'} />
           ) : (
             <PianoRoll track={track} song={song} socket={socket} />
           )}

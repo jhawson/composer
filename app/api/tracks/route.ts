@@ -30,6 +30,7 @@ export async function POST(request: NextRequest) {
         instrumentType,
         volume,
         order: trackOrder,
+        drumKit: instrumentType === 'drums' ? 'breakbeat13' : null,
       },
       include: {
         notes: true,

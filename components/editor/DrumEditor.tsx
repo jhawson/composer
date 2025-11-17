@@ -10,6 +10,7 @@ interface DrumEditorProps {
   track: Track;
   song: Song;
   socket: any;
+  drumKit: string;
 }
 
 const CELL_WIDTH = 30;
@@ -24,7 +25,7 @@ const DRUM_LABELS: Record<DrumType, string> = {
   tom3: 'Tom 3',
 };
 
-export function DrumEditor({ track, song, socket }: DrumEditorProps) {
+export function DrumEditor({ track, song, socket, drumKit }: DrumEditorProps) {
   const [selectedDuration, setSelectedDuration] = useState<NoteDuration>('sixteenth');
   const canvasRef = useRef<HTMLDivElement>(null);
 
@@ -35,10 +36,12 @@ export function DrumEditor({ track, song, socket }: DrumEditorProps) {
 
   const drumTypeToNote = (drumType: string): string => {
     const mapping: Record<string, string> = {
-      bass: 'C1',
+      kick: 'C1',
       snare: 'D1',
       hihat: 'F1',
-      ride: 'A1',
+      tom1: 'G1',
+      tom2: 'A1',
+      tom3: 'B1',
     };
     return mapping[drumType] || 'C1';
   };
@@ -63,7 +66,7 @@ export function DrumEditor({ track, song, socket }: DrumEditorProps) {
     } else {
       // Play the drum sound immediately
       const drumNote = drumTypeToNote(drumType);
-      audioEngine.playNote('drums', drumNote, selectedDuration);
+      audioEngine.playNote('drums', drumNote, selectedDuration, drumKit);
 
       // Add a new note
       try {

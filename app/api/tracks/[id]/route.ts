@@ -8,7 +8,7 @@ export async function PATCH(
 ) {
   try {
     const body = await request.json();
-    const { instrumentType, volume, order } = body;
+    const { instrumentType, volume, order, drumKit } = body;
 
     const track = await prisma.track.update({
       where: { id: params.id },
@@ -16,6 +16,7 @@ export async function PATCH(
         ...(instrumentType !== undefined && { instrumentType }),
         ...(volume !== undefined && { volume }),
         ...(order !== undefined && { order }),
+        ...(drumKit !== undefined && { drumKit }),
       },
       include: {
         notes: true,

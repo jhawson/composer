@@ -42,6 +42,7 @@ model Track {
   instrumentType String   @map("instrument_type") // piano, bass, drums
   volume         Float    @default(0.8) // 0.0 to 1.0
   order          Int      // display order in the UI
+  drumKit        String?  @map("drum_kit") // drum kit name for drum tracks
   createdAt      DateTime @default(now()) @map("created_at")
   updatedAt      DateTime @updatedAt @map("updated_at")
 

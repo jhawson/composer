@@ -4,9 +4,9 @@ import { Song, Track, Note, NoteDuration, DURATION_TO_SIXTEENTHS } from '@/types
 export class AudioEngine {
   private static instance: AudioEngine;
   private players: Map<string, Tone.PolySynth | Tone.Sampler> = new Map();
-  private drumSampler: Tone.Sampler | null = null;
-  private drumSamplerLoaded = false;
-  private drumSamplerLoadPromise: Promise<void> | null = null;
+  private drumSamplers: Map<string, Tone.Sampler> = new Map();
+  private drumSamplersLoaded: Map<string, boolean> = new Map();
+  private drumSamplersLoadPromises: Map<string, Promise<void>> = new Map();
   private pianoSampler: Tone.Sampler | null = null;
   private pianoSamplerLoaded = false;
   private pianoSamplerLoadPromise: Promise<void> | null = null;
@@ -33,10 +33,10 @@ export class AudioEngine {
   async initialize() {
     await Tone.start();
     console.log('Audio engine initialized');
-    // Preload all instrument samples
+    // Preload all instrument samples (using default drum kit)
     await Promise.all([
       this.loadPianoSampler(),
-      this.loadDrumSampler(),
+      this.loadDrumSampler('breakbeat13'),
       this.loadOrganSampler(),
       this.loadBassGuitarSampler(),
       this.loadAcousticGuitarSampler(),
@@ -44,19 +44,19 @@ export class AudioEngine {
     ]);
   }
 
-  private async loadDrumSampler(): Promise<void> {
-    if (this.drumSamplerLoaded) {
+  private async loadDrumSampler(drumKit: string): Promise<void> {
+    if (this.drumSamplersLoaded.get(drumKit)) {
       return Promise.resolve();
     }
 
-    if (this.drumSamplerLoadPromise) {
-      return this.drumSamplerLoadPromise;
+    if (this.drumSamplersLoadPromises.has(drumKit)) {
+      return this.drumSamplersLoadPromises.get(drumKit)!;
     }
 
-    console.log('Loading drum samples from CDN...');
+    console.log(`Loading drum samples for kit: ${drumKit}...`);
 
-    this.drumSamplerLoadPromise = new Promise<void>((resolve, reject) => {
-      this.drumSampler = new Tone.Sampler({
+    const loadPromise = new Promise<void>((resolve, reject) => {
+      const sampler = new Tone.Sampler({
         urls: {
           C1: 'kick.mp3',
           D1: 'snare.mp3',
@@ -65,21 +65,25 @@ export class AudioEngine {
           A1: 'tom2.mp3',
           B1: 'tom3.mp3'
         },
-        baseUrl: 'https://tonejs.github.io/audio/drum-samples/breakbeat13/',
+        baseUrl: `https://tonejs.github.io/audio/drum-samples/${drumKit}/`,
+        attack: 0,
+        release: 0.5,
+        curve: 'linear' as const,
         onload: () => {
-          console.log('Drum samples loaded successfully');
-          this.drumSamplerLoaded = true;
-          this.players.set('drums', this.drumSampler!);
+          console.log(`Drum samples loaded successfully for kit: ${drumKit}`);
+          this.drumSamplersLoaded.set(drumKit, true);
+          this.drumSamplers.set(drumKit, sampler);
           resolve();
         },
         onerror: (err) => {
-          console.error('Failed to load drum samples:', err);
+          console.error(`Failed to load drum samples for kit ${drumKit}:`, err);
           reject(err);
         }
       }).toDestination();
     });
 
-    return this.drumSamplerLoadPromise;
+    this.drumSamplersLoadPromises.set(drumKit, loadPromise);
+    return loadPromise;
   }
 
   private async loadPianoSampler(): Promise<void> {
@@ -307,18 +311,22 @@ export class AudioEngine {
     return this.samplersLoadPromises['cello'];
   }
 
-  private getOrCreateInstrument(instrumentType: string): Tone.PolySynth | Tone.Sampler {
-    if (this.players.has(instrumentType)) {
-      return this.players.get(instrumentType)!;
+  private getOrCreateInstrument(instrumentType: string, drumKit?: string): Tone.PolySynth | Tone.Sampler {
+    // For drums, use drumKit-specific key
+    const playerKey = instrumentType === 'drums' && drumKit ? `drums-${drumKit}` : instrumentType;
+
+    if (this.players.has(playerKey)) {
+      return this.players.get(playerKey)!;
     }
 
     let instrument: Tone.PolySynth | Tone.Sampler;
 
     if (instrumentType === 'drums') {
-      if (this.drumSampler) {
-        instrument = this.drumSampler;
+      const kit = drumKit || 'breakbeat13';
+      if (this.drumSamplers.has(kit)) {
+        instrument = this.drumSamplers.get(kit)!;
       } else {
-        throw new Error('Drum sampler not initialized.');
+        throw new Error(`Drum sampler for kit ${kit} not initialized.`);
       }
     } else if (instrumentType === 'piano') {
       if (this.pianoSampler) {
@@ -359,7 +367,7 @@ export class AudioEngine {
       }
     }
 
-    this.players.set(instrumentType, instrument);
+    this.players.set(playerKey, instrument);
     return instrument;
   }
 
@@ -420,8 +428,13 @@ export class AudioEngine {
     }> = [];
 
     for (const track of tracksToPlay) {
-      const instrument = this.getOrCreateInstrument(track.instrumentType);
-      console.log(`Track ${track.instrumentType}: ${track.notes.length} notes`);
+      // Load drum kit if needed
+      if (track.instrumentType === 'drums' && track.drumKit) {
+        await this.loadDrumSampler(track.drumKit);
+      }
+
+      const instrument = this.getOrCreateInstrument(track.instrumentType, track.drumKit || undefined);
+      console.log(`Track ${track.instrumentType}${track.drumKit ? ` (${track.drumKit})` : ''}: ${track.notes.length} notes`);
 
       for (const note of track.notes) {
         const noteTime = this.positionToSeconds(note.startPosition, song.tempo);
@@ -526,13 +539,16 @@ export class AudioEngine {
   }
 
   // Play a single note immediately (for preview when clicking)
-  async playNote(instrumentType: string, pitch: string, duration: NoteDuration = 'quarter') {
+  async playNote(instrumentType: string, pitch: string, duration: NoteDuration = 'quarter', drumKit?: string) {
     await this.initialize();
 
     // Ensure samples are loaded for sampled instruments
-    if (instrumentType === 'drums' && !this.drumSamplerLoaded) {
-      console.log('Waiting for drum samples to load...');
-      await this.loadDrumSampler();
+    if (instrumentType === 'drums') {
+      const kit = drumKit || 'breakbeat13';
+      if (!this.drumSamplersLoaded.get(kit)) {
+        console.log(`Waiting for drum samples to load for kit: ${kit}...`);
+        await this.loadDrumSampler(kit);
+      }
     }
 
     if (instrumentType === 'piano' && !this.pianoSamplerLoaded) {
@@ -540,7 +556,7 @@ export class AudioEngine {
       await this.loadPianoSampler();
     }
 
-    const instrument = this.getOrCreateInstrument(instrumentType);
+    const instrument = this.getOrCreateInstrument(instrumentType, drumKit);
     const durationSeconds = this.durationToSeconds(duration, 120); // Use default tempo for preview
     instrument.triggerAttackRelease(pitch, durationSeconds);
   }
@@ -549,10 +565,8 @@ export class AudioEngine {
     this.stop();
     this.players.forEach((player) => player.dispose());
     this.players.clear();
-    if (this.drumSampler) {
-      this.drumSampler.dispose();
-      this.drumSampler = null;
-    }
+    this.drumSamplers.forEach((sampler) => sampler.dispose());
+    this.drumSamplers.clear();
     if (this.pianoSampler) {
       this.pianoSampler.dispose();
       this.pianoSampler = null;
