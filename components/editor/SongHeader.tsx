@@ -8,14 +8,18 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Song } from '@/types';
 import { ArrowLeft } from 'lucide-react';
+import { useUserStore } from '@/lib/store';
+import { addContributor } from '@/lib/contributors';
 
 interface SongHeaderProps {
   song: Song;
   onUpdate: (updates: Partial<Song>) => void;
+  onContributorAdded?: (contributor: any) => void;
 }
 
-export function SongHeader({ song, onUpdate }: SongHeaderProps) {
+export function SongHeader({ song, onUpdate, onContributorAdded }: SongHeaderProps) {
   const router = useRouter();
+  const user = useUserStore((state) => state.user);
   const [name, setName] = useState(song.name);
   const [tempo, setTempo] = useState(song.tempo.toString());
   const [timeSignature, setTimeSignature] = useState(song.timeSignature);
@@ -50,6 +54,14 @@ export function SongHeader({ song, onUpdate }: SongHeaderProps) {
         });
 
         if (!response.ok) throw new Error('Failed to update song');
+
+        // Add user as contributor
+        if (user && onContributorAdded) {
+          const contributor = await addContributor(song.id, user.id);
+          if (contributor) {
+            onContributorAdded(contributor);
+          }
+        }
       } catch (error) {
         console.error('Error auto-saving song:', error);
       }

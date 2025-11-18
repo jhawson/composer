@@ -15,6 +15,15 @@ export interface Song {
   updatedAt: string;
   tracks: Track[];
   chatMessages?: ChatMessage[];
+  contributors?: SongContributor[];
+}
+
+export interface SongContributor {
+  id: string;
+  songId: string;
+  userId: string;
+  createdAt: string;
+  user: User;
 }
 
 export interface Track {

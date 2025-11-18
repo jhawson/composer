@@ -9,6 +9,7 @@ import { TrackList } from '@/components/editor/TrackList';
 import { ChatPanel } from '@/components/editor/ChatPanel';
 import { PlaybackControls } from '@/components/editor/PlaybackControls';
 import { PresenceIndicator } from '@/components/editor/PresenceIndicator';
+import { Contributors } from '@/components/editor/Contributors';
 import { useSocket } from '@/lib/useSocket';
 
 export default function EditorPage() {
@@ -98,12 +99,27 @@ export default function EditorPage() {
         setSong({ ...song, chatMessages: [...(song.chatMessages || []), message] });
       }
     },
+    onContributorAdded: (contributor) => {
+      if (song && !song.contributors?.find(c => c.userId === contributor.userId)) {
+        setSong({ ...song, contributors: [...(song.contributors || []), contributor] });
+      }
+    },
   });
 
   const updateSong = (updates: Partial<Song>) => {
     if (song) {
       setSong({ ...song, ...updates });
       socket.emitSongUpdate(updates);
+    }
+  };
+
+  const handleContributorAdded = (contributor: any) => {
+    if (song && !song.contributors?.find(c => c.userId === contributor.userId)) {
+      setSong({
+        ...song,
+        contributors: [...(song.contributors || []), contributor],
+      });
+      socket.emitContributorAdded(contributor);
     }
   };
 
@@ -120,7 +136,7 @@ export default function EditorPage() {
       {/* Header with song metadata controls and presence */}
       <div className="border-b bg-card">
         <div className="flex items-center justify-between px-4 py-2">
-          <SongHeader song={song} onUpdate={updateSong} />
+          <SongHeader song={song} onUpdate={updateSong} onContributorAdded={handleContributorAdded} />
           <PresenceIndicator users={presentUsers} />
         </div>
       </div>
@@ -138,6 +154,9 @@ export default function EditorPage() {
         {/* Chat panel */}
         <ChatPanel songId={song.id} socket={socket} messages={song.chatMessages || []} />
       </div>
+
+      {/* Contributors list at the bottom */}
+      <Contributors contributors={song.contributors || []} />
     </div>
   );
 }

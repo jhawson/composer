@@ -6,6 +6,8 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Song, Track, INSTRUMENT_TYPES, InstrumentType } from '@/types';
 import { TrackEditor } from './TrackEditor';
 import { Plus } from 'lucide-react';
+import { useUserStore } from '@/lib/store';
+import { addContributor } from '@/lib/contributors';
 
 interface TrackListProps {
   song: Song;
@@ -16,6 +18,7 @@ interface TrackListProps {
 export function TrackList({ song, onUpdate, socket }: TrackListProps) {
   const [creating, setCreating] = useState(false);
   const [dialogOpen, setDialogOpen] = useState(false);
+  const user = useUserStore((state) => state.user);
 
   // Alphabetize instruments for the dialog
   const alphabetizedInstruments = [...INSTRUMENT_TYPES].sort((a, b) =>
@@ -42,6 +45,16 @@ export function TrackList({ song, onUpdate, socket }: TrackListProps) {
         tracks: [...song.tracks, newTrack],
       });
       socket.emitTrackCreated(newTrack);
+
+      // Add user as contributor
+      if (user) {
+        const contributor = await addContributor(song.id, user.id);
+        if (contributor && !song.contributors?.find(c => c.userId === user.id)) {
+          onUpdate({
+            contributors: [...(song.contributors || []), contributor],
+          });
+        }
+      }
     } catch (error) {
       console.error('Error creating track:', error);
       alert('Failed to add track');
@@ -55,6 +68,14 @@ export function TrackList({ song, onUpdate, socket }: TrackListProps) {
       track.id === trackId ? { ...track, ...updates } : track
     );
     onUpdate({ tracks: updatedTracks });
+  };
+
+  const handleContributorAdded = (contributor: any) => {
+    if (!song.contributors?.find(c => c.userId === contributor.userId)) {
+      onUpdate({
+        contributors: [...(song.contributors || []), contributor],
+      });
+    }
   };
 
   const handleDeleteTrack = async (trackId: string) => {
@@ -71,6 +92,16 @@ export function TrackList({ song, onUpdate, socket }: TrackListProps) {
         tracks: song.tracks.filter((track) => track.id !== trackId),
       });
       socket.emitTrackDeleted(trackId);
+
+      // Add user as contributor
+      if (user) {
+        const contributor = await addContributor(song.id, user.id);
+        if (contributor && !song.contributors?.find(c => c.userId === user.id)) {
+          onUpdate({
+            contributors: [...(song.contributors || []), contributor],
+          });
+        }
+      }
     } catch (error) {
       console.error('Error deleting track:', error);
       alert('Failed to delete track');
@@ -93,6 +124,7 @@ export function TrackList({ song, onUpdate, socket }: TrackListProps) {
           onUpdate={(updates) => handleUpdateTrack(track.id, updates)}
           onDelete={() => handleDeleteTrack(track.id)}
           socket={socket}
+          onContributorAdded={handleContributorAdded}
         />
       ))}
 

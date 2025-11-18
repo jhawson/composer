@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { io, Socket } from 'socket.io-client';
-import { User, Song, Track, Note, ChatMessage } from '@/types';
+import { User, Song, Track, Note, ChatMessage, SongContributor } from '@/types';
 
 interface UseSocketOptions {
   songId: string;
@@ -13,6 +13,7 @@ interface UseSocketOptions {
   onNoteCreated?: (trackId: string, note: Note) => void;
   onNoteDeleted?: (trackId: string, noteId: string) => void;
   onChatMessage?: (message: ChatMessage) => void;
+  onContributorAdded?: (contributor: SongContributor) => void;
 }
 
 export function useSocket(options: UseSocketOptions) {
@@ -27,6 +28,7 @@ export function useSocket(options: UseSocketOptions) {
     onNoteCreated,
     onNoteDeleted,
     onChatMessage,
+    onContributorAdded,
   } = options;
 
   const socketRef = useRef<Socket | null>(null);
@@ -42,6 +44,7 @@ export function useSocket(options: UseSocketOptions) {
     onNoteCreated,
     onNoteDeleted,
     onChatMessage,
+    onContributorAdded,
   });
 
   // Update refs with latest callbacks on every render (no useEffect needed)
@@ -54,6 +57,7 @@ export function useSocket(options: UseSocketOptions) {
     onNoteCreated,
     onNoteDeleted,
     onChatMessage,
+    onContributorAdded,
   };
 
   useEffect(() => {
@@ -110,6 +114,11 @@ export function useSocket(options: UseSocketOptions) {
     socket.on('chat-message', (message) => {
       console.log('[useSocket] Received chat-message', message);
       callbacksRef.current.onChatMessage?.(message);
+    });
+
+    socket.on('contributor-added', (contributor) => {
+      console.log('[useSocket] Received contributor-added', contributor);
+      callbacksRef.current.onContributorAdded?.(contributor);
     });
 
     // Cleanup on unmount
@@ -176,6 +185,11 @@ export function useSocket(options: UseSocketOptions) {
     // Don't update locally - let the server broadcast handle it for everyone
   };
 
+  const emitContributorAdded = (contributor: SongContributor) => {
+    console.log('[useSocket] Emitting contributor-added', { songId, contributorId: contributor.id });
+    socketRef.current?.emit('contributor-added', { songId, contributor });
+  };
+
   return {
     isConnected,
     emitSongUpdate,
@@ -185,5 +199,6 @@ export function useSocket(options: UseSocketOptions) {
     emitNoteCreated,
     emitNoteDeleted,
     emitChatMessage,
+    emitContributorAdded,
   };
 }

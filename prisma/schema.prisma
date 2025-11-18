@@ -16,7 +16,8 @@ model User {
   avatarIcon String  @map("avatar_icon") // animal emoji/icon identifier
   createdAt DateTime @default(now()) @map("created_at")
 
-  chatMessages ChatMessage[]
+  chatMessages  ChatMessage[]
+  contributions SongContributor[]
 
   @@map("users")
 }
@@ -32,6 +33,7 @@ model Song {
 
   tracks        Track[]
   chatMessages  ChatMessage[]
+  contributors  SongContributor[]
 
   @@map("songs")
 }
@@ -80,6 +82,21 @@ model ChatMessage {
   user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@map("chat_messages")
+  @@index([songId])
+  @@index([userId])
+}
+
+model SongContributor {
+  id        String   @id @default(cuid())
+  songId    String   @map("song_id")
+  userId    String   @map("user_id")
+  createdAt DateTime @default(now()) @map("created_at")
+
+  song Song @relation(fields: [songId], references: [id], onDelete: Cascade)
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([songId, userId])
+  @@map("song_contributors")
   @@index([songId])
   @@index([userId])
 }

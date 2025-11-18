@@ -16,9 +16,10 @@ interface TrackEditorProps {
   onUpdate: (updates: Partial<Track>) => void;
   onDelete: () => void;
   socket: any;
+  onContributorAdded?: (contributor: any) => void;
 }
 
-export function TrackEditor({ track, song, onUpdate, onDelete, socket }: TrackEditorProps) {
+export function TrackEditor({ track, song, onUpdate, onDelete, socket, onContributorAdded }: TrackEditorProps) {
   const [collapsed, setCollapsed] = useState(false);
   const [updating, setUpdating] = useState(false);
 
@@ -160,9 +161,20 @@ export function TrackEditor({ track, song, onUpdate, onDelete, socket }: TrackEd
       {!collapsed && (
         <div className="p-4 bg-background">
           {track.instrumentType === 'drums' ? (
-            <DrumEditor track={track} song={song} socket={socket} drumKit={track.drumKit || 'breakbeat13'} />
+            <DrumEditor
+              track={track}
+              song={song}
+              socket={socket}
+              drumKit={track.drumKit || 'breakbeat13'}
+              onContributorAdded={onContributorAdded}
+            />
           ) : (
-            <PianoRoll track={track} song={song} socket={socket} />
+            <PianoRoll
+              track={track}
+              song={song}
+              socket={socket}
+              onContributorAdded={onContributorAdded}
+            />
           )}
         </div>
       )}

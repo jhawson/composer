@@ -5,12 +5,15 @@ import { Track, Song, Note, NOTE_DURATIONS, NoteDuration, DURATION_TO_SIXTEENTHS
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Label } from '@/components/ui/label';
 import { audioEngine } from '@/lib/audio-engine';
+import { useUserStore } from '@/lib/store';
+import { addContributor } from '@/lib/contributors';
 
 interface DrumEditorProps {
   track: Track;
   song: Song;
   socket: any;
   drumKit: string;
+  onContributorAdded?: (contributor: any) => void;
 }
 
 const CELL_WIDTH = 30;
@@ -25,9 +28,10 @@ const DRUM_LABELS: Record<DrumType, string> = {
   tom3: 'Tom 3',
 };
 
-export function DrumEditor({ track, song, socket, drumKit }: DrumEditorProps) {
+export function DrumEditor({ track, song, socket, drumKit, onContributorAdded }: DrumEditorProps) {
   const [selectedDuration, setSelectedDuration] = useState<NoteDuration>('sixteenth');
   const canvasRef = useRef<HTMLDivElement>(null);
+  const user = useUserStore((state) => state.user);
 
   // Calculate total width based on bars and time signature
   const beatsPerBar = parseInt(song.timeSignature.split('/')[0]);
@@ -60,6 +64,14 @@ export function DrumEditor({ track, song, socket, drumKit }: DrumEditorProps) {
         });
         if (!response.ok) throw new Error('Failed to delete note');
         socket.emitNoteDeleted(track.id, existingNote.id);
+
+        // Add user as contributor
+        if (user && onContributorAdded) {
+          const contributor = await addContributor(song.id, user.id);
+          if (contributor) {
+            onContributorAdded(contributor);
+          }
+        }
       } catch (error) {
         console.error('Error deleting note:', error);
       }
@@ -83,6 +95,14 @@ export function DrumEditor({ track, song, socket, drumKit }: DrumEditorProps) {
         if (!response.ok) throw new Error('Failed to create note');
         const newNote = await response.json();
         socket.emitNoteCreated(track.id, newNote);
+
+        // Add user as contributor
+        if (user && onContributorAdded) {
+          const contributor = await addContributor(song.id, user.id);
+          if (contributor) {
+            onContributorAdded(contributor);
+          }
+        }
       } catch (error) {
         console.error('Error creating note:', error);
       }

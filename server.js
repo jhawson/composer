@@ -105,6 +105,12 @@ app.prepare().then(() => {
       io.to(`song:${songId}`).emit('chat-message', message);
     });
 
+    // Contributor added
+    socket.on('contributor-added', ({ songId, contributor }) => {
+      console.log('[server] Received contributor-added:', { songId, contributorId: contributor?.id, socketId: socket.id });
+      socket.to(`song:${songId}`).emit('contributor-added', contributor);
+    });
+
     // Disconnect
     socket.on('disconnect', () => {
       console.log('Client disconnected:', socket.id);

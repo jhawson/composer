@@ -30,6 +30,14 @@ export async function GET(
             user: true,
           },
         },
+        contributors: {
+          orderBy: {
+            createdAt: 'asc',
+          },
+          include: {
+            user: true,
+          },
+        },
       },
     });
 

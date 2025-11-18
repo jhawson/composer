@@ -5,11 +5,14 @@ import { Track, Song, Note, NOTE_DURATIONS, NoteDuration, DURATION_TO_SIXTEENTHS
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Label } from '@/components/ui/label';
 import { audioEngine } from '@/lib/audio-engine';
+import { useUserStore } from '@/lib/store';
+import { addContributor } from '@/lib/contributors';
 
 interface PianoRollProps {
   track: Track;
   song: Song;
   socket: any;
+  onContributorAdded?: (contributor: any) => void;
 }
 
 // MIDI notes from A0 to C7
@@ -26,9 +29,10 @@ const NOTES = [
 const CELL_WIDTH = 30;
 const CELL_HEIGHT = 20;
 
-export function PianoRoll({ track, song, socket }: PianoRollProps) {
+export function PianoRoll({ track, song, socket, onContributorAdded }: PianoRollProps) {
   const [selectedDuration, setSelectedDuration] = useState<NoteDuration>('quarter');
   const canvasRef = useRef<HTMLDivElement>(null);
+  const user = useUserStore((state) => state.user);
 
   // Calculate total width based on bars and time signature
   const beatsPerBar = parseInt(song.timeSignature.split('/')[0]);
@@ -50,6 +54,14 @@ export function PianoRoll({ track, song, socket }: PianoRollProps) {
         });
         if (!response.ok) throw new Error('Failed to delete note');
         socket.emitNoteDeleted(track.id, existingNote.id);
+
+        // Add user as contributor
+        if (user && onContributorAdded) {
+          const contributor = await addContributor(song.id, user.id);
+          if (contributor) {
+            onContributorAdded(contributor);
+          }
+        }
       } catch (error) {
         console.error('Error deleting note:', error);
       }
@@ -72,6 +84,14 @@ export function PianoRoll({ track, song, socket }: PianoRollProps) {
         if (!response.ok) throw new Error('Failed to create note');
         const newNote = await response.json();
         socket.emitNoteCreated(track.id, newNote);
+
+        // Add user as contributor
+        if (user && onContributorAdded) {
+          const contributor = await addContributor(song.id, user.id);
+          if (contributor) {
+            onContributorAdded(contributor);
+          }
+        }
       } catch (error) {
         console.error('Error creating note:', error);
       }
