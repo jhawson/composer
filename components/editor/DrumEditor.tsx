@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useRef } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { Track, Song, Note, NOTE_DURATIONS, NoteDuration, DURATION_TO_SIXTEENTHS, DRUM_TYPES, DrumType } from '@/types';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Label } from '@/components/ui/label';
@@ -31,6 +31,7 @@ const DRUM_LABELS: Record<DrumType, string> = {
 export function DrumEditor({ track, song, socket, drumKit, onContributorAdded }: DrumEditorProps) {
   const [selectedDuration, setSelectedDuration] = useState<NoteDuration>('sixteenth');
   const canvasRef = useRef<HTMLDivElement>(null);
+  const scrollContainerRef = useRef<HTMLDivElement>(null);
   const user = useUserStore((state) => state.user);
 
   // Calculate total width based on bars and time signature
@@ -116,6 +117,17 @@ export function DrumEditor({ track, song, socket, drumKit, onContributorAdded }:
     ) || null;
   };
 
+  // Center scroll position on mount
+  useEffect(() => {
+    if (scrollContainerRef.current) {
+      const container = scrollContainerRef.current;
+      const scrollHeight = container.scrollHeight;
+      const clientHeight = container.clientHeight;
+      const middleScroll = (scrollHeight - clientHeight) / 2;
+      container.scrollTop = middleScroll;
+    }
+  }, []);
+
   return (
     <div className="space-y-3">
       <div className="flex items-center gap-3">
@@ -134,7 +146,7 @@ export function DrumEditor({ track, song, socket, drumKit, onContributorAdded }:
         </Select>
       </div>
 
-      <div className="border rounded-lg overflow-auto" style={{ maxHeight: '300px', maxWidth: '100%' }}>
+      <div ref={scrollContainerRef} className="border rounded-lg overflow-auto" style={{ maxHeight: '300px', maxWidth: '100%' }}>
         <div ref={canvasRef} className="relative bg-background">
           {/* Drum editor grid */}
           <div className="flex">

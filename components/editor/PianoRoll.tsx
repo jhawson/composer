@@ -32,6 +32,7 @@ const CELL_HEIGHT = 20;
 export function PianoRoll({ track, song, socket, onContributorAdded }: PianoRollProps) {
   const [selectedDuration, setSelectedDuration] = useState<NoteDuration>('quarter');
   const canvasRef = useRef<HTMLDivElement>(null);
+  const scrollContainerRef = useRef<HTMLDivElement>(null);
   const user = useUserStore((state) => state.user);
 
   // Calculate total width based on bars and time signature
@@ -105,6 +106,17 @@ export function PianoRoll({ track, song, socket, onContributorAdded }: PianoRoll
     ) || null;
   };
 
+  // Center scroll position on mount
+  useEffect(() => {
+    if (scrollContainerRef.current) {
+      const container = scrollContainerRef.current;
+      const scrollHeight = container.scrollHeight;
+      const clientHeight = container.clientHeight;
+      const middleScroll = (scrollHeight - clientHeight) / 2;
+      container.scrollTop = middleScroll;
+    }
+  }, []);
+
   return (
     <div className="space-y-3">
       <div className="flex items-center gap-3">
@@ -123,7 +135,7 @@ export function PianoRoll({ track, song, socket, onContributorAdded }: PianoRoll
         </Select>
       </div>
 
-      <div className="border rounded-lg overflow-auto" style={{ maxHeight: '400px', maxWidth: '100%' }}>
+      <div ref={scrollContainerRef} className="border rounded-lg overflow-auto" style={{ maxHeight: '400px', maxWidth: '100%' }}>
         <div ref={canvasRef} className="relative bg-background">
           {/* Piano roll grid */}
           <div className="flex">
