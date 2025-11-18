@@ -2,7 +2,8 @@
 
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
-import { Song, Track, INSTRUMENT_TYPES } from '@/types';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { Song, Track, INSTRUMENT_TYPES, InstrumentType } from '@/types';
 import { TrackEditor } from './TrackEditor';
 import { Plus } from 'lucide-react';
 
@@ -14,8 +15,15 @@ interface TrackListProps {
 
 export function TrackList({ song, onUpdate, socket }: TrackListProps) {
   const [creating, setCreating] = useState(false);
+  const [dialogOpen, setDialogOpen] = useState(false);
+
+  // Alphabetize instruments for the dialog
+  const alphabetizedInstruments = [...INSTRUMENT_TYPES].sort((a, b) =>
+    a.localeCompare(b)
+  );
 
   const handleAddTrack = async (instrumentType: string) => {
+    setDialogOpen(false);
     setCreating(true);
     try {
       const response = await fetch('/api/tracks', {
@@ -88,18 +96,33 @@ export function TrackList({ song, onUpdate, socket }: TrackListProps) {
         />
       ))}
 
-      <div className="flex gap-2 pt-4 border-t">
-        {INSTRUMENT_TYPES.map((instrument) => (
-          <Button
-            key={instrument}
-            variant="outline"
-            onClick={() => handleAddTrack(instrument)}
-            disabled={creating}
-          >
-            <Plus className="h-4 w-4 mr-2" />
-            Add {instrument.charAt(0).toUpperCase() + instrument.slice(1)} Track
-          </Button>
-        ))}
+      <div className="pt-4 border-t">
+        <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
+          <DialogTrigger asChild>
+            <Button variant="outline" disabled={creating}>
+              <Plus className="h-4 w-4 mr-2" />
+              Add Track
+            </Button>
+          </DialogTrigger>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Select Instrument</DialogTitle>
+            </DialogHeader>
+            <div className="grid gap-2 py-4">
+              {alphabetizedInstruments.map((instrument) => (
+                <Button
+                  key={instrument}
+                  variant="outline"
+                  onClick={() => handleAddTrack(instrument)}
+                  disabled={creating}
+                  className="justify-start"
+                >
+                  {instrument.charAt(0).toUpperCase() + instrument.slice(1)}
+                </Button>
+              ))}
+            </div>
+          </DialogContent>
+        </Dialog>
       </div>
     </div>
   );
