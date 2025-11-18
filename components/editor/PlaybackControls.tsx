@@ -12,9 +12,12 @@ interface PlaybackControlsProps {
 
 export function PlaybackControls({ song }: PlaybackControlsProps) {
   const [isPlaying, setIsPlaying] = useState(false);
-  const [isLooping, setIsLooping] = useState(false);
+  const [isLooping, setIsLooping] = useState(true);
 
   useEffect(() => {
+    // Set loop to true by default
+    audioEngine.setLoop(true);
+
     // Register callback to update UI when playback stops
     audioEngine.setOnStopCallback(() => {
       setIsPlaying(false);
