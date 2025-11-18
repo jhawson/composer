@@ -15,6 +15,8 @@ export class AudioEngine {
   private bassSampler: Tone.Sampler | null = null;
   private guitarSampler: Tone.Sampler | null = null;
   private celloSampler: Tone.Sampler | null = null;
+  private fluteSampler: Tone.Sampler | null = null;
+  private harpSampler: Tone.Sampler | null = null;
   private samplersLoaded: Record<string, boolean> = {};
   private samplersLoadPromises: Record<string, Promise<void> | null> = {};
   private isPlaying = false;
@@ -43,7 +45,9 @@ export class AudioEngine {
       this.loadOrganSampler(),
       this.loadBassSampler(),
       this.loadGuitarSampler(),
-      this.loadCelloSampler()
+      this.loadCelloSampler(),
+      this.loadFluteSampler(),
+      this.loadHarpSampler()
     ]);
   }
 
@@ -332,6 +336,105 @@ export class AudioEngine {
     return this.samplersLoadPromises['cello'];
   }
 
+  private async loadFluteSampler(): Promise<void> {
+    if (this.samplersLoaded['flute']) {
+      return Promise.resolve();
+    }
+
+    if (this.samplersLoadPromises['flute']) {
+      return this.samplersLoadPromises['flute']!;
+    }
+
+    console.log('Loading flute samples from CDN...');
+
+    this.samplersLoadPromises['flute'] = new Promise<void>((resolve, reject) => {
+      this.fluteSampler = new Tone.Sampler({
+        urls: {
+          A4: 'A4.mp3',
+          A5: 'A5.mp3',
+          A6: 'A6.mp3',
+          C4: 'C4.mp3',
+          C5: 'C5.mp3',
+          C6: 'C6.mp3',
+          C7: 'C7.mp3',
+          E4: 'E4.mp3',
+          E5: 'E5.mp3',
+          E6: 'E6.mp3'
+        },
+        baseUrl: 'https://raw.githubusercontent.com/nbrosowsky/tonejs-instruments/master/samples/flute/',
+        release: 1,
+        onload: () => {
+          console.log('Flute samples loaded successfully');
+          this.samplersLoaded['flute'] = true;
+          this.players.set('flute', this.fluteSampler!);
+          resolve();
+        },
+        onerror: (err) => {
+          console.error('Failed to load flute samples:', err);
+          reject(err);
+        }
+      }).toDestination();
+    });
+
+    return this.samplersLoadPromises['flute'];
+  }
+
+  private async loadHarpSampler(): Promise<void> {
+    if (this.samplersLoaded['harp']) {
+      return Promise.resolve();
+    }
+
+    if (this.samplersLoadPromises['harp']) {
+      return this.samplersLoadPromises['harp']!;
+    }
+
+    console.log('Loading harp samples from CDN...');
+
+    this.samplersLoadPromises['harp'] = new Promise<void>((resolve, reject) => {
+      this.harpSampler = new Tone.Sampler({
+        urls: {
+          A2: 'A2.mp3',
+          A4: 'A4.mp3',
+          A6: 'A6.mp3',
+          B1: 'B1.mp3',
+          B3: 'B3.mp3',
+          B5: 'B5.mp3',
+          B6: 'B6.mp3',
+          C3: 'C3.mp3',
+          C5: 'C5.mp3',
+          D2: 'D2.mp3',
+          D4: 'D4.mp3',
+          D6: 'D6.mp3',
+          D7: 'D7.mp3',
+          E1: 'E1.mp3',
+          E3: 'E3.mp3',
+          E5: 'E5.mp3',
+          F2: 'F2.mp3',
+          F4: 'F4.mp3',
+          F6: 'F6.mp3',
+          F7: 'F7.mp3',
+          G1: 'G1.mp3',
+          G3: 'G3.mp3',
+          G5: 'G5.mp3'
+        },
+        baseUrl: 'https://raw.githubusercontent.com/nbrosowsky/tonejs-instruments/master/samples/harp/',
+        release: 1,
+        onload: () => {
+          console.log('Harp samples loaded successfully');
+          this.samplersLoaded['harp'] = true;
+          this.players.set('harp', this.harpSampler!);
+          resolve();
+        },
+        onerror: (err) => {
+          console.error('Failed to load harp samples:', err);
+          reject(err);
+        }
+      }).toDestination();
+    });
+
+    return this.samplersLoadPromises['harp'];
+  }
+
   private getOrCreateInstrument(instrumentType: string, drumKit?: string): Tone.PolySynth | Tone.Sampler {
     // For drums, use drumKit-specific key
     const playerKey = instrumentType === 'drums' && drumKit ? `drums-${drumKit}` : instrumentType;
@@ -384,6 +487,18 @@ export class AudioEngine {
         instrument = this.celloSampler;
       } else {
         throw new Error('Cello sampler not initialized.');
+      }
+    } else if (instrumentType === 'flute') {
+      if (this.fluteSampler) {
+        instrument = this.fluteSampler;
+      } else {
+        throw new Error('Flute sampler not initialized.');
+      }
+    } else if (instrumentType === 'harp') {
+      if (this.harpSampler) {
+        instrument = this.harpSampler;
+      } else {
+        throw new Error('Harp sampler not initialized.');
       }
     } else {
       // Fallback to piano for unknown types
@@ -617,6 +732,14 @@ export class AudioEngine {
     if (this.celloSampler) {
       this.celloSampler.dispose();
       this.celloSampler = null;
+    }
+    if (this.fluteSampler) {
+      this.fluteSampler.dispose();
+      this.fluteSampler = null;
+    }
+    if (this.harpSampler) {
+      this.harpSampler.dispose();
+      this.harpSampler = null;
     }
   }
 }

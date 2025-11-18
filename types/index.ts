@@ -50,7 +50,7 @@ export interface ChatMessage {
 }
 
 export type NoteDuration = 'whole' | 'half' | 'quarter' | 'eighth' | 'sixteenth';
-export type InstrumentType = 'piano' | 'drums' | 'organ' | 'bass' | 'guitar' | 'cello' | 'synth';
+export type InstrumentType = 'piano' | 'drums' | 'synth' | 'organ' | 'bass' | 'guitar' | 'cello' | 'flute' | 'harp';
 export type DrumType = 'kick' | 'snare' | 'hihat' | 'tom1' | 'tom2' | 'tom3';
 export type DrumKit =
   | '4OP-FM'
@@ -71,7 +71,7 @@ export type DrumKit =
   | 'breakbeat9';
 
 export const NOTE_DURATIONS: NoteDuration[] = ['whole', 'half', 'quarter', 'eighth', 'sixteenth'];
-export const INSTRUMENT_TYPES: InstrumentType[] = ['piano', 'drums', 'synth', 'organ', 'bass', 'guitar', 'cello'];
+export const INSTRUMENT_TYPES: InstrumentType[] = ['piano', 'drums', 'synth', 'organ', 'bass', 'guitar', 'cello', 'flute', 'harp'];
 export const DRUM_TYPES: DrumType[] = ['tom3', 'tom2', 'tom1', 'hihat', 'snare', 'kick'];
 export const DRUM_KITS: DrumKit[] = [
   'breakbeat13',
