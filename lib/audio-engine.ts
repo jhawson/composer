@@ -576,7 +576,11 @@ export class AudioEngine {
       }
 
       const instrument = this.getOrCreateInstrument(track.instrumentType, track.drumKit || undefined);
-      console.log(`Track ${track.instrumentType}${track.drumKit ? ` (${track.drumKit})` : ''}: ${track.notes.length} notes`);
+
+      // Set the volume on the instrument immediately
+      instrument.volume.value = Tone.gainToDb(track.volume);
+
+      console.log(`Track ${track.instrumentType}${track.drumKit ? ` (${track.drumKit})` : ''}: ${track.notes.length} notes, volume: ${track.volume}`);
 
       for (const note of track.notes) {
         const noteTime = this.positionToSeconds(note.startPosition, song.tempo);
@@ -614,7 +618,6 @@ export class AudioEngine {
     };
 
     this.currentPart = new Tone.Part((time, event: EventType) => {
-      event.instrument.volume.value = Tone.gainToDb(event.volume);
       event.instrument.triggerAttackRelease(event.note, event.duration, time);
     }, events as any);
 
