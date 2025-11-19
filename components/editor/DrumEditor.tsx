@@ -52,10 +52,8 @@ export function DrumEditor({ track, song, socket, drumKit, onContributorAdded }:
   };
 
   const handleCellClick = async (drumType: DrumType, position: number) => {
-    // Check if there's already a note at this position and drum type
-    const existingNote = track.notes.find(
-      (note) => note.drumType === drumType && note.startPosition === position
-    );
+    // Check if there's already a note at this position and drum type (anywhere in the note's duration)
+    const existingNote = isNoteAt(drumType, position);
 
     if (existingNote) {
       // Delete the note

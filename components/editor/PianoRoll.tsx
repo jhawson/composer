@@ -42,10 +42,8 @@ export function PianoRoll({ track, song, socket, onContributorAdded }: PianoRoll
   const totalWidth = totalSixteenths * CELL_WIDTH;
 
   const handleCellClick = async (pitch: string, position: number) => {
-    // Check if there's already a note at this position and pitch
-    const existingNote = track.notes.find(
-      (note) => note.pitch === pitch && note.startPosition === position
-    );
+    // Check if there's already a note at this position and pitch (anywhere in the note's duration)
+    const existingNote = isNoteAt(pitch, position);
 
     if (existingNote) {
       // Delete the note
